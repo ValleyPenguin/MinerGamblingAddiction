@@ -1,0 +1,56 @@
+## Handle line endings automatically
+* text=auto
+
+## Define Macros
+[attr]lfs filter=lfs diff=lfs merge=lfs -text
+[attr]unityyaml merge=unityyamlmerge eol=lf
+
+## 3D Models
+*.fbx lfs
+*.obj lfs
+*.max lfs
+*.blend lfs
+*.dae lfs
+*.3ds lfs
+
+## Textures & Images
+*.png lfs
+*.jpg lfs
+*.jpeg lfs
+*.tga lfs
+*.psd lfs
+*.tif lfs
+*.tiff lfs
+*.iff lfs
+*.gif lfs
+*.bmp lfs
+*.exr lfs
+
+## Audio & Video
+*.mp3 lfs
+*.wav lfs
+*.ogg lfs
+*.mp4 lfs
+*.mov lfs
+*.asf lfs
+*.avi lfs
+
+## Unity Internal & Compiled Files
+*.unitypackage lfs
+*.dll lfs
+*.so lfs
+*.dylib lfs
+*.exe lfs
+*.pdb lfs
+*.mdb lfs
+*.zip lfs
+*.7z lfs
+
+## Unity YAML (Force text handling for merging)
+*.meta unityyaml
+*.unity unityyaml
+*.prefab unityyaml
+*.asset unityyaml
+*.mat unityyaml
+*.anim unityyaml
+*.controller unityyaml
