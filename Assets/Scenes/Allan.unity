@@ -336,7 +336,7 @@ MonoBehaviour:
   centerGridOnThisObject: 1
   gridLineColor: {r: 0.18, g: 0.22, b: 0.27, a: 1}
   gridLinePixels: 1
-  orePrefab: {fileID: 0}
+  orePrefab: {fileID: 4351020599810967207, guid: c07def4c6745b1f4abc599bc22a7494c, type: 3}
   fitOrePrefabToCell: 1
   oreSpawnChance: 0.18
   maximumOres: 28
