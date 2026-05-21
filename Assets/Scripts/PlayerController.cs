@@ -24,17 +24,20 @@ public class PlayerController : MonoBehaviour
     private void CalculateMovement()
     {
         newPosition = position + direction;
-        CheckValidMove();
+        CheckMove();
         transform.position = grid.GridToWorld(position);
     }
 
-    private void CheckValidMove()
+    private void CheckMove()
     {
         //Checking for the boundary
         if (newPosition.x < 0) return;
         if (newPosition.y < 0) return;
         if (newPosition.x > grid.Columns - 1) return;
         if (newPosition.y > grid.Rows - 1) return;
+        
+        //Check if we've run into anything
+        
         
         position = newPosition;
     }
