@@ -12,6 +12,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         transform.position = grid.GridToWorld(position);
+        grid.SetPlayerCell(position, true);
     }
 
     public void OnMove(InputValue value)
@@ -50,6 +51,7 @@ public class PlayerController : MonoBehaviour
         
         
         position = newPosition;
+        grid.SetPlayerCell(position);
 
         if (grid.TryTriggerBombAt(position))
         {

@@ -33,6 +33,13 @@ public sealed class GridSystem : MonoBehaviour
     [SerializeField] private int randomSeed = 12345;
     [SerializeField] private Color fallbackOreColor = new Color(0.9f, 0.55f, 0.12f, 1f);
 
+    [Header("Ore Visibility")]
+    [SerializeField, Min(0)] private int oreRevealRange = 3;
+    [SerializeField, Min(0)] private int oreFadeEdgeBlocks = 1;
+    [SerializeField, Range(0f, 1f)] private float oreEdgeAlpha = 0.25f;
+    [SerializeField, Min(0f)] private float oreRevealSpeed = 10f;
+    [SerializeField] private bool previewAllOresInEditor = true;
+
     [Header("Bombs")]
     [SerializeField, Min(0)] private int bombCount = 5;
     [SerializeField] private GameObject bombPrefab;
@@ -44,7 +51,10 @@ public sealed class GridSystem : MonoBehaviour
     private static Material gridMaterial;
     private static Sprite fallbackOreSprite;
     private static Sprite fallbackBombSprite;
+    private readonly List<OreView> oreViews = new List<OreView>();
     private readonly Dictionary<Vector2Int, BombTrap> bombsByCell = new Dictionary<Vector2Int, BombTrap>();
+    private Vector2Int playerCell;
+    private bool hasPlayerCell;
 
     public int Columns => columns;
     public int Rows => rows;
@@ -71,6 +81,9 @@ public sealed class GridSystem : MonoBehaviour
         cellPixelSize = Mathf.Max(1, cellPixelSize);
         gridLinePixels = Mathf.Max(1f, gridLinePixels);
         maximumOres = Mathf.Max(0, maximumOres);
+        oreRevealRange = Mathf.Max(0, oreRevealRange);
+        oreFadeEdgeBlocks = Mathf.Max(0, oreFadeEdgeBlocks);
+        oreRevealSpeed = Mathf.Max(0f, oreRevealSpeed);
         bombCount = Mathf.Max(0, bombCount);
         bombRevealDuration = Mathf.Max(0f, bombRevealDuration);
 
@@ -84,6 +97,14 @@ public sealed class GridSystem : MonoBehaviour
 #endif
 
         Regenerate();
+    }
+
+    private void Update()
+    {
+        if (Application.isPlaying)
+        {
+            UpdateOreVisibility(false);
+        }
     }
 
     [ContextMenu("Regenerate Grid")]
@@ -135,6 +156,14 @@ public sealed class GridSystem : MonoBehaviour
         }
 
         return false;
+    }
+
+    public void SetPlayerCell(Vector2Int cell, bool instant = false)
+    {
+        bool shouldUpdateInstantly = instant || !hasPlayerCell;
+        playerCell = cell;
+        hasPlayerCell = true;
+        UpdateOreVisibility(shouldUpdateInstantly);
     }
 
     private void DrawGrid(Transform parent)
@@ -254,6 +283,8 @@ public sealed class GridSystem : MonoBehaviour
         {
             FitToCell(ore);
         }
+
+        RegisterOreView(ore, cell);
     }
 
     private void AddBomb(Transform parent, Vector2Int cell, int bombIndex)
@@ -344,6 +375,73 @@ public sealed class GridSystem : MonoBehaviour
         target.transform.localScale = Vector3.one * (CellWorldSize / largestSide);
     }
 
+    private void RegisterOreView(GameObject ore, Vector2Int cell)
+    {
+        SpriteRenderer[] renderers = ore.GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers.Length == 0)
+        {
+            return;
+        }
+
+        OreView oreView = new OreView(cell, renderers);
+        oreViews.Add(oreView);
+
+        if (!Application.isPlaying && previewAllOresInEditor)
+        {
+            oreView.SetAlpha(1f);
+            return;
+        }
+
+        oreView.SetAlpha(hasPlayerCell ? CalculateOreTargetAlpha(cell) : 0f);
+    }
+
+    private void UpdateOreVisibility(bool instant)
+    {
+        if (!hasPlayerCell)
+        {
+            return;
+        }
+
+        float deltaTime = Application.isPlaying ? Time.deltaTime : 0f;
+        for (int i = oreViews.Count - 1; i >= 0; i--)
+        {
+            OreView oreView = oreViews[i];
+            if (!oreView.IsValid)
+            {
+                oreViews.RemoveAt(i);
+                continue;
+            }
+
+            float targetAlpha = CalculateOreTargetAlpha(oreView.Cell);
+            if (instant || oreRevealSpeed <= 0f)
+            {
+                oreView.SetAlpha(targetAlpha);
+            }
+            else
+            {
+                oreView.MoveAlphaToward(targetAlpha, oreRevealSpeed * deltaTime);
+            }
+        }
+    }
+
+    private float CalculateOreTargetAlpha(Vector2Int cell)
+    {
+        int distance = Mathf.Max(Mathf.Abs(cell.x - playerCell.x), Mathf.Abs(cell.y - playerCell.y));
+        if (distance > oreRevealRange)
+        {
+            return 0f;
+        }
+
+        int effectiveFadeEdgeBlocks = Mathf.Min(oreFadeEdgeBlocks, oreRevealRange);
+        if (effectiveFadeEdgeBlocks == 0 || distance <= oreRevealRange - effectiveFadeEdgeBlocks)
+        {
+            return 1f;
+        }
+
+        float fadeProgress = (oreRevealRange - distance) / (float)effectiveFadeEdgeBlocks;
+        return Mathf.Lerp(oreEdgeAlpha, 1f, fadeProgress);
+    }
+
     private void AddLine(Transform parent, string lineName, Vector2 start, Vector2 end)
     {
         GameObject lineObject = new GameObject(lineName);
@@ -419,6 +517,7 @@ public sealed class GridSystem : MonoBehaviour
 
     private void ClearPreview()
     {
+        oreViews.Clear();
         bombsByCell.Clear();
 
         for (int i = transform.childCount - 1; i >= 0; i--)
@@ -503,6 +602,56 @@ public sealed class GridSystem : MonoBehaviour
         fallbackBombSprite.hideFlags = HideFlags.HideAndDontSave;
 
         return fallbackBombSprite;
+    }
+
+    private sealed class OreView
+    {
+        private readonly SpriteRenderer[] renderers;
+        private readonly Color[] baseColors;
+        private float currentAlpha = 1f;
+
+        public OreView(Vector2Int cell, SpriteRenderer[] renderers)
+        {
+            Cell = cell;
+            this.renderers = renderers;
+            baseColors = new Color[renderers.Length];
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                baseColors[i] = renderers[i].color;
+            }
+        }
+
+        public Vector2Int Cell { get; }
+        public bool IsValid => renderers.Length > 0 && renderers[0] != null;
+
+        public void SetAlpha(float alpha)
+        {
+            currentAlpha = Mathf.Clamp01(alpha);
+            ApplyAlpha();
+        }
+
+        public void MoveAlphaToward(float targetAlpha, float maxDelta)
+        {
+            currentAlpha = Mathf.MoveTowards(currentAlpha, Mathf.Clamp01(targetAlpha), maxDelta);
+            ApplyAlpha();
+        }
+
+        private void ApplyAlpha()
+        {
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer spriteRenderer = renderers[i];
+                if (spriteRenderer == null)
+                {
+                    continue;
+                }
+
+                Color color = baseColors[i];
+                color.a *= currentAlpha;
+                spriteRenderer.color = color;
+            }
+        }
     }
 
 #if UNITY_EDITOR
