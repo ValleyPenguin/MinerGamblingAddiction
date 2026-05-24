@@ -334,14 +334,20 @@ MonoBehaviour:
   rows: 11
   cellPixelSize: 32
   centerGridOnThisObject: 1
-  gridLineColor: {r: 0.18, g: 0.22, b: 0.27, a: 1}
-  gridLinePixels: 1
+  gridLineColor: {r: 0.18, g: 0.22, b: 0.27, a: 0.27450982}
+  gridLinePixels: 2
   orePrefab: {fileID: 4351020599810967207, guid: c07def4c6745b1f4abc599bc22a7494c, type: 3}
   fitOrePrefabToCell: 1
   oreSpawnChance: 0.18
   maximumOres: 28
-  randomSeed: 12345
+  randomSeed: 6767
   fallbackOreColor: {r: 0.121568635, g: 0.8750537, b: 0.9019608, a: 1}
+  bombCount: 3
+  bombPrefab: {fileID: 8982772035730681752, guid: 3b6bb42e68b300448bdb0857e89558d2, type: 3}
+  fitBombPrefabToCell: 1
+  previewBombsInEditor: 1
+  bombRevealDuration: 0.75
+  fallbackBombColor: {r: 0.95, g: 0.12, b: 0.1, a: 1}
 --- !u!1 &1354805817
 GameObject:
   m_ObjectHideFlags: 0

@@ -33,8 +33,18 @@ public sealed class GridSystem : MonoBehaviour
     [SerializeField] private int randomSeed = 12345;
     [SerializeField] private Color fallbackOreColor = new Color(0.9f, 0.55f, 0.12f, 1f);
 
+    [Header("Bombs")]
+    [SerializeField, Min(0)] private int bombCount = 5;
+    [SerializeField] private GameObject bombPrefab;
+    [SerializeField] private bool fitBombPrefabToCell = true;
+    [SerializeField] private bool previewBombsInEditor = true;
+    [SerializeField, Min(0f)] private float bombRevealDuration = 0.75f;
+    [SerializeField] private Color fallbackBombColor = new Color(0.95f, 0.12f, 0.1f, 1f);
+
     private static Material gridMaterial;
     private static Sprite fallbackOreSprite;
+    private static Sprite fallbackBombSprite;
+    private readonly Dictionary<Vector2Int, BombTrap> bombsByCell = new Dictionary<Vector2Int, BombTrap>();
 
     public int Columns => columns;
     public int Rows => rows;
@@ -61,6 +71,8 @@ public sealed class GridSystem : MonoBehaviour
         cellPixelSize = Mathf.Max(1, cellPixelSize);
         gridLinePixels = Mathf.Max(1f, gridLinePixels);
         maximumOres = Mathf.Max(0, maximumOres);
+        bombCount = Mathf.Max(0, bombCount);
+        bombRevealDuration = Mathf.Max(0f, bombRevealDuration);
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)
@@ -87,7 +99,8 @@ public sealed class GridSystem : MonoBehaviour
 
         Transform previewRoot = CreatePreviewRoot();
         DrawGrid(previewRoot);
-        SpawnOres(previewRoot);
+        HashSet<Vector2Int> occupiedCells = SpawnOres(previewRoot);
+        SpawnBombs(previewRoot, occupiedCells);
     }
 
     public Vector3 GridToWorld(Vector2Int cell)
@@ -113,6 +126,17 @@ public sealed class GridSystem : MonoBehaviour
         return cell.x >= 0 && cell.x < columns && cell.y >= 0 && cell.y < rows;
     }
 
+    public bool TryTriggerBombAt(Vector2Int cell)
+    {
+        if (bombsByCell.TryGetValue(cell, out BombTrap bomb))
+        {
+            bomb.Trigger();
+            return true;
+        }
+
+        return false;
+    }
+
     private void DrawGrid(Transform parent)
     {
         Vector2 origin = GridOrigin();
@@ -133,11 +157,12 @@ public sealed class GridSystem : MonoBehaviour
         }
     }
 
-    private void SpawnOres(Transform parent)
+    private HashSet<Vector2Int> SpawnOres(Transform parent)
     {
+        HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
         if (oreSpawnChance <= 0f || maximumOres == 0)
         {
-            return;
+            return occupiedCells;
         }
 
         List<Vector2Int> cells = AllCellsShuffled();
@@ -148,18 +173,54 @@ public sealed class GridSystem : MonoBehaviour
         {
             if (oresCreated >= maximumOres)
             {
-                return;
+                return occupiedCells;
             }
 
             if (random.NextDouble() <= oreSpawnChance)
             {
                 AddOre(parent, cell, oresCreated);
+                occupiedCells.Add(cell);
                 oresCreated++;
             }
+        }
+
+        return occupiedCells;
+    }
+
+    private void SpawnBombs(Transform parent, HashSet<Vector2Int> occupiedCells)
+    {
+        bombsByCell.Clear();
+        if (bombCount == 0)
+        {
+            return;
+        }
+
+        List<Vector2Int> cells = AllCellsShuffled(randomSeed + 2);
+        int bombsCreated = 0;
+
+        foreach (Vector2Int cell in cells)
+        {
+            if (bombsCreated >= bombCount)
+            {
+                return;
+            }
+
+            if (occupiedCells.Contains(cell))
+            {
+                continue;
+            }
+
+            AddBomb(parent, cell, bombsCreated);
+            bombsCreated++;
         }
     }
 
     private List<Vector2Int> AllCellsShuffled()
+    {
+        return AllCellsShuffled(randomSeed);
+    }
+
+    private List<Vector2Int> AllCellsShuffled(int seed)
     {
         List<Vector2Int> cells = new List<Vector2Int>(columns * rows);
         for (int y = 0; y < rows; y++)
@@ -170,7 +231,7 @@ public sealed class GridSystem : MonoBehaviour
             }
         }
 
-        System.Random random = new System.Random(randomSeed);
+        System.Random random = new System.Random(seed);
         for (int i = cells.Count - 1; i > 0; i--)
         {
             int swapIndex = random.Next(i + 1);
@@ -195,6 +256,28 @@ public sealed class GridSystem : MonoBehaviour
         }
     }
 
+    private void AddBomb(Transform parent, Vector2Int cell, int bombIndex)
+    {
+        GameObject bomb = bombPrefab != null ? CreateBombFromPrefab(parent) : CreateFallbackBomb(parent);
+        SetPreviewHideFlags(bomb);
+        bomb.name = $"Bomb {bombIndex:00}";
+        bomb.transform.position = GridToWorld(cell);
+
+        if (bombPrefab == null || fitBombPrefabToCell)
+        {
+            FitToCell(bomb);
+        }
+
+        BombTrap bombTrap = bomb.GetComponent<BombTrap>();
+        if (bombTrap == null)
+        {
+            bombTrap = bomb.AddComponent<BombTrap>();
+        }
+
+        bombTrap.Configure(bombRevealDuration, previewBombsInEditor);
+        bombsByCell[cell] = bombTrap;
+    }
+
     private GameObject CreateOreFromPrefab(Transform parent)
     {
 #if UNITY_EDITOR
@@ -205,6 +288,18 @@ public sealed class GridSystem : MonoBehaviour
 #endif
 
         return Instantiate(orePrefab, parent);
+    }
+
+    private GameObject CreateBombFromPrefab(Transform parent)
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            return (GameObject)PrefabUtility.InstantiatePrefab(bombPrefab, parent);
+        }
+#endif
+
+        return Instantiate(bombPrefab, parent);
     }
 
     private GameObject CreateFallbackOre(Transform parent)
@@ -219,6 +314,20 @@ public sealed class GridSystem : MonoBehaviour
         spriteRenderer.sortingOrder = 1;
 
         return ore;
+    }
+
+    private GameObject CreateFallbackBomb(Transform parent)
+    {
+        GameObject bomb = new GameObject("Bomb");
+        SetPreviewHideFlags(bomb);
+        bomb.transform.SetParent(parent, false);
+
+        SpriteRenderer spriteRenderer = bomb.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = GetFallbackBombSprite();
+        spriteRenderer.color = fallbackBombColor;
+        spriteRenderer.sortingOrder = 2;
+
+        return bomb;
     }
 
     private void FitToCell(GameObject target)
@@ -310,6 +419,8 @@ public sealed class GridSystem : MonoBehaviour
 
     private void ClearPreview()
     {
+        bombsByCell.Clear();
+
         for (int i = transform.childCount - 1; i >= 0; i--)
         {
             Transform child = transform.GetChild(i);
@@ -369,6 +480,29 @@ public sealed class GridSystem : MonoBehaviour
         fallbackOreSprite.hideFlags = HideFlags.HideAndDontSave;
 
         return fallbackOreSprite;
+    }
+
+    private static Sprite GetFallbackBombSprite()
+    {
+        if (fallbackBombSprite != null)
+        {
+            return fallbackBombSprite;
+        }
+
+        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false)
+        {
+            name = "Generated Bomb Texture",
+            filterMode = FilterMode.Point,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        texture.SetPixel(0, 0, Color.white);
+        texture.Apply();
+
+        fallbackBombSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
+        fallbackBombSprite.name = "Generated Bomb Sprite";
+        fallbackBombSprite.hideFlags = HideFlags.HideAndDontSave;
+
+        return fallbackBombSprite;
     }
 
 #if UNITY_EDITOR

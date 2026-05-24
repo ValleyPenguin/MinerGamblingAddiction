@@ -7,7 +7,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector2Int direction;
     [SerializeField] private GridSystem grid;
     private Vector2Int newPosition;
-    
+    private bool inputLocked;
     
     void Start()
     {
@@ -16,7 +16,17 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputValue value)
     {
+        if (inputLocked)
+        {
+            return;
+        }
+
         direction = Vector2Int.RoundToInt(value.Get<Vector2>());
+        if (direction == Vector2Int.zero)
+        {
+            return;
+        }
+
         CalculateMovement();
         Debug.Log(direction);
     }
@@ -40,5 +50,10 @@ public class PlayerController : MonoBehaviour
         
         
         position = newPosition;
+
+        if (grid.TryTriggerBombAt(position))
+        {
+            inputLocked = true;
+        }
     }
 }
