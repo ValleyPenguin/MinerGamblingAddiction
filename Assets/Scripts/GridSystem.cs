@@ -48,6 +48,9 @@ public sealed class GridSystem : MonoBehaviour
     [SerializeField, Min(0f)] private float bombRevealDuration = 0.75f;
     [SerializeField] private Color fallbackBombColor = new Color(0.95f, 0.12f, 0.1f, 1f);
 
+    [Header("Stone")] 
+    [SerializeField] private GameObject stonePrefab;
+
     private static Material gridMaterial;
     private static Sprite fallbackOreSprite;
     private static Sprite fallbackBombSprite;
@@ -56,10 +59,14 @@ public sealed class GridSystem : MonoBehaviour
     private Vector2Int playerCell;
     private bool hasPlayerCell;
 
+    private HashSet<Vector2Int> occupiedCells;
+
     public int Columns => columns;
     public int Rows => rows;
     public int CellPixelSize => cellPixelSize;
     public float CellWorldSize => (float)cellPixelSize / pixelsPerUnit;
+
+    public HashSet<Vector2Int> OccupiedCells => occupiedCells;
 
     private void Awake()
     {
@@ -120,8 +127,9 @@ public sealed class GridSystem : MonoBehaviour
 
         Transform previewRoot = CreatePreviewRoot();
         DrawGrid(previewRoot);
-        HashSet<Vector2Int> occupiedCells = SpawnOres(previewRoot);
-        SpawnBombs(previewRoot, occupiedCells);
+        occupiedCells = SpawnOres(previewRoot);
+        SpawnBombs(previewRoot);
+        SpawnStone();
     }
 
     public Vector3 GridToWorld(Vector2Int cell)
@@ -188,10 +196,10 @@ public sealed class GridSystem : MonoBehaviour
 
     private HashSet<Vector2Int> SpawnOres(Transform parent)
     {
-        HashSet<Vector2Int> occupiedCells = new HashSet<Vector2Int>();
+        HashSet<Vector2Int> newOccupiedCells = new HashSet<Vector2Int>();
         if (oreSpawnChance <= 0f || maximumOres == 0)
         {
-            return occupiedCells;
+            return newOccupiedCells;
         }
 
         List<Vector2Int> cells = AllCellsShuffled();
@@ -202,21 +210,21 @@ public sealed class GridSystem : MonoBehaviour
         {
             if (oresCreated >= maximumOres)
             {
-                return occupiedCells;
+                return newOccupiedCells;
             }
 
             if (random.NextDouble() <= oreSpawnChance)
             {
                 AddOre(parent, cell, oresCreated);
-                occupiedCells.Add(cell);
+                newOccupiedCells.Add(cell);
                 oresCreated++;
             }
         }
 
-        return occupiedCells;
+        return newOccupiedCells;
     }
 
-    private void SpawnBombs(Transform parent, HashSet<Vector2Int> occupiedCells)
+    private void SpawnBombs(Transform parent)
     {
         bombsByCell.Clear();
         if (bombCount == 0)
@@ -242,6 +250,21 @@ public sealed class GridSystem : MonoBehaviour
             AddBomb(parent, cell, bombsCreated);
             bombsCreated++;
         }
+    }
+
+    private void SpawnStone()
+    {
+        List<Vector2Int> cells = AllCellsShuffled(randomSeed + 3);
+
+        foreach (Vector2Int cell in cells)
+        {
+            if (occupiedCells.Contains(cell))
+            {
+                continue;
+            }
+            AddStone(cell);
+        }
+            
     }
 
     private List<Vector2Int> AllCellsShuffled()
@@ -307,6 +330,12 @@ public sealed class GridSystem : MonoBehaviour
 
         bombTrap.Configure(bombRevealDuration, previewBombsInEditor);
         bombsByCell[cell] = bombTrap;
+    }
+
+    private void AddStone(Vector2Int cell)
+    {
+        GameObject stone = stonePrefab;
+        stone.transform.position = GridToWorld(cell);
     }
 
     private GameObject CreateOreFromPrefab(Transform parent)
@@ -602,6 +631,11 @@ public sealed class GridSystem : MonoBehaviour
         fallbackBombSprite.hideFlags = HideFlags.HideAndDontSave;
 
         return fallbackBombSprite;
+    }
+
+    public void DestroyOre(Vector2Int cell)
+    {
+        occupiedCells.Remove(cell);
     }
 
     private sealed class OreView

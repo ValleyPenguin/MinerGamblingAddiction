@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,9 +6,12 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Vector2Int position;
     [SerializeField] private Vector2Int direction;
+    [SerializeField] private float waitTime;
     [SerializeField] private GridSystem grid;
+    [SerializeField] private GameManager gm;
     private Vector2Int newPosition;
     private bool inputLocked;
+    private bool timerLock;
     
     void Start()
     {
@@ -17,7 +21,7 @@ public class PlayerController : MonoBehaviour
 
     public void OnMove(InputValue value)
     {
-        if (inputLocked)
+        if (inputLocked || timerLock)
         {
             return;
         }
@@ -29,7 +33,13 @@ public class PlayerController : MonoBehaviour
         }
 
         CalculateMovement();
-        Debug.Log(direction);
+        StartCoroutine(walkTimer());
+    }
+
+    public void OnCashOut(InputValue value)
+    {
+        gm.CashOut();
+        inputLocked = true;
     }
 
     private void CalculateMovement()
@@ -53,9 +63,22 @@ public class PlayerController : MonoBehaviour
         position = newPosition;
         grid.SetPlayerCell(position);
 
+        if (grid.OccupiedCells.Contains(position))
+        {
+            grid.DestroyOre(position);
+            gm.MineOre();
+        }
+
         if (grid.TryTriggerBombAt(position))
         {
             inputLocked = true;
         }
+    }
+
+    private IEnumerator walkTimer()
+    {
+        timerLock = true;
+        yield return new WaitForSeconds(waitTime);
+        timerLock = false;
     }
 }
