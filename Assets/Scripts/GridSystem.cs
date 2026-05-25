@@ -31,6 +31,7 @@ public sealed class GridSystem : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float oreSpawnChance = 0.18f;
     [SerializeField, Min(0)] private int maximumOres = 28;
     [SerializeField] private int randomSeed = 12345;
+    [SerializeField] private bool randomizeSeedOnPlay;
     [SerializeField] private Color fallbackOreColor = new Color(0.9f, 0.55f, 0.12f, 1f);
 
     [Header("Ore Collect Effect")]
@@ -69,6 +70,7 @@ public sealed class GridSystem : MonoBehaviour
     private readonly Dictionary<Vector2Int, BombTrap> bombsByCell = new Dictionary<Vector2Int, BombTrap>();
     private Vector2Int playerCell;
     private bool hasPlayerCell;
+    private bool hasRandomizedRuntimeSeed;
 
     private HashSet<Vector2Int> occupiedCells;
 
@@ -137,6 +139,7 @@ public sealed class GridSystem : MonoBehaviour
             return;
         }
 
+        RandomizeRuntimeSeedIfNeeded();
         ClearPreview();
         FrameCamera();
 
@@ -277,6 +280,17 @@ public sealed class GridSystem : MonoBehaviour
                 AddStone(parent, cell);
             }
         }
+    }
+
+    private void RandomizeRuntimeSeedIfNeeded()
+    {
+        if (!Application.isPlaying || !randomizeSeedOnPlay || hasRandomizedRuntimeSeed)
+        {
+            return;
+        }
+
+        randomSeed = Random.Range(1, int.MaxValue);
+        hasRandomizedRuntimeSeed = true;
     }
 
     private List<Vector2Int> AllCellsShuffled()
