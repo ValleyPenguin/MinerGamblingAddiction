@@ -58,10 +58,13 @@ public sealed class GridSystem : MonoBehaviour
 
     [Header("Stone")] 
     [SerializeField] private GameObject stonePrefab;
+    [SerializeField] private bool fitStonePrefabToCell = true;
+    [SerializeField] private Color fallbackStoneColor = new Color(0.28f, 0.26f, 0.25f, 1f);
 
     private static Material gridMaterial;
     private static Sprite fallbackOreSprite;
     private static Sprite fallbackBombSprite;
+    private static Sprite fallbackStoneSprite;
     private readonly List<OreView> oreViews = new List<OreView>();
     private readonly Dictionary<Vector2Int, BombTrap> bombsByCell = new Dictionary<Vector2Int, BombTrap>();
     private Vector2Int playerCell;
@@ -141,7 +144,7 @@ public sealed class GridSystem : MonoBehaviour
         DrawGrid(previewRoot);
         occupiedCells = SpawnOres(previewRoot);
         SpawnBombs(previewRoot);
-        SpawnStone();
+        SpawnStone(previewRoot);
     }
 
     public Vector3 GridToWorld(Vector2Int cell)
@@ -264,19 +267,16 @@ public sealed class GridSystem : MonoBehaviour
         }
     }
 
-    private void SpawnStone()
+    private void SpawnStone(Transform parent)
     {
-        List<Vector2Int> cells = AllCellsShuffled(randomSeed + 3);
-
-        foreach (Vector2Int cell in cells)
+        for (int y = 0; y < rows; y++)
         {
-            if (occupiedCells.Contains(cell))
+            for (int x = 0; x < columns; x++)
             {
-                continue;
+                Vector2Int cell = new Vector2Int(x, y);
+                AddStone(parent, cell);
             }
-            AddStone(cell);
         }
-            
     }
 
     private List<Vector2Int> AllCellsShuffled()
@@ -344,10 +344,17 @@ public sealed class GridSystem : MonoBehaviour
         bombsByCell[cell] = bombTrap;
     }
 
-    private void AddStone(Vector2Int cell)
+    private void AddStone(Transform parent, Vector2Int cell)
     {
-        GameObject stone = stonePrefab;
+        GameObject stone = stonePrefab != null ? CreateStoneFromPrefab(parent) : CreateFallbackStone(parent);
+        SetPreviewHideFlags(stone);
+        stone.name = $"Stone {cell.x:00},{cell.y:00}";
         stone.transform.position = GridToWorld(cell);
+
+        if (stonePrefab == null || fitStonePrefabToCell)
+        {
+            FitToCell(stone);
+        }
     }
 
     private GameObject CreateOreFromPrefab(Transform parent)
@@ -372,6 +379,18 @@ public sealed class GridSystem : MonoBehaviour
 #endif
 
         return Instantiate(bombPrefab, parent);
+    }
+
+    private GameObject CreateStoneFromPrefab(Transform parent)
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            return (GameObject)PrefabUtility.InstantiatePrefab(stonePrefab, parent);
+        }
+#endif
+
+        return Instantiate(stonePrefab, parent);
     }
 
     private GameObject CreateFallbackOre(Transform parent)
@@ -400,6 +419,20 @@ public sealed class GridSystem : MonoBehaviour
         spriteRenderer.sortingOrder = 2;
 
         return bomb;
+    }
+
+    private GameObject CreateFallbackStone(Transform parent)
+    {
+        GameObject stone = new GameObject("Stone");
+        SetPreviewHideFlags(stone);
+        stone.transform.SetParent(parent, false);
+
+        SpriteRenderer spriteRenderer = stone.AddComponent<SpriteRenderer>();
+        spriteRenderer.sprite = GetFallbackStoneSprite();
+        spriteRenderer.color = fallbackStoneColor;
+        spriteRenderer.sortingOrder = 0;
+
+        return stone;
     }
 
     private void FitToCell(GameObject target)
@@ -643,6 +676,29 @@ public sealed class GridSystem : MonoBehaviour
         fallbackBombSprite.hideFlags = HideFlags.HideAndDontSave;
 
         return fallbackBombSprite;
+    }
+
+    private static Sprite GetFallbackStoneSprite()
+    {
+        if (fallbackStoneSprite != null)
+        {
+            return fallbackStoneSprite;
+        }
+
+        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false)
+        {
+            name = "Generated Stone Texture",
+            filterMode = FilterMode.Point,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+        texture.SetPixel(0, 0, Color.white);
+        texture.Apply();
+
+        fallbackStoneSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
+        fallbackStoneSprite.name = "Generated Stone Sprite";
+        fallbackStoneSprite.hideFlags = HideFlags.HideAndDontSave;
+
+        return fallbackStoneSprite;
     }
 
     public void DestroyOre(Vector2Int cell)

@@ -201,7 +201,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.2884138, g: 0.19215688, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0.5176471, g: 0.4901961, b: 0.5294118, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -382,9 +382,9 @@ MonoBehaviour:
   gridLinePixels: 2
   orePrefab: {fileID: 4351020599810967207, guid: c07def4c6745b1f4abc599bc22a7494c, type: 3}
   fitOrePrefabToCell: 1
-  oreSpawnChance: 0.18
-  maximumOres: 28
-  randomSeed: 6767
+  oreSpawnChance: 0.3
+  maximumOres: 40
+  randomSeed: 4204
   fallbackOreColor: {r: 0.121568635, g: 0.8750537, b: 0.9019608, a: 1}
   collectedDiamondSprite: {fileID: 6400359420969742804, guid: d40a6a858b18fc0489fdb8c076f986af, type: 3}
   minimumCollectedDiamonds: 6
@@ -397,13 +397,15 @@ MonoBehaviour:
   oreEdgeAlpha: 0.1
   oreRevealSpeed: 0.5
   previewAllOresInEditor: 1
-  bombCount: 6
+  bombCount: 7
   bombPrefab: {fileID: 8982772035730681752, guid: 3b6bb42e68b300448bdb0857e89558d2, type: 3}
   fitBombPrefabToCell: 1
   previewBombsInEditor: 1
   bombRevealDuration: 0.75
   fallbackBombColor: {r: 0.95, g: 0.12, b: 0.1, a: 1}
   stonePrefab: {fileID: 7510784227878636226, guid: 58a3e7917ceb12a4ea51d62801bca620, type: 3}
+  fitStonePrefabToCell: 1
+  fallbackStoneColor: {r: 0.28, g: 0.26, b: 0.25, a: 1}
 --- !u!1 &1354805817
 GameObject:
   m_ObjectHideFlags: 0
@@ -527,7 +529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  m_Actions: {fileID: -944628639613478452, guid: 053d14061197b67419571a3b93dc5194, type: 3}
   m_NotificationBehavior: 0
   m_UIInputModule: {fileID: 0}
   m_DeviceLostEvent:
@@ -542,7 +544,7 @@ MonoBehaviour:
   m_ActionEvents: []
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
-  m_DefaultActionMap: 
+  m_DefaultActionMap: Movement
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
 --- !u!114 &1354805822
