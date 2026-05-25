@@ -12,6 +12,14 @@ public class PlayerController : MonoBehaviour
     private Vector2Int newPosition;
     private bool inputLocked;
     private bool timerLock;
+
+    private void Awake()
+    {
+        if (GetComponent<BombProximityVignette>() == null)
+        {
+            gameObject.AddComponent<BombProximityVignette>();
+        }
+    }
     
     void Start()
     {

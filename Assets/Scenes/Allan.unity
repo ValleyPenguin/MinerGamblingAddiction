@@ -119,6 +119,50 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &13113455
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 13113456}
+  - component: {fileID: 13113457}
+  m_Layer: 0
+  m_Name: Game Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &13113456
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13113455}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.65598, y: -0.20806, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &13113457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 13113455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1f02c9970b0d734bae39872a30c593d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
 --- !u!1 &13172210
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,12 +391,13 @@ MonoBehaviour:
   oreEdgeAlpha: 0.1
   oreRevealSpeed: 0.5
   previewAllOresInEditor: 1
-  bombCount: 3
+  bombCount: 6
   bombPrefab: {fileID: 8982772035730681752, guid: 3b6bb42e68b300448bdb0857e89558d2, type: 3}
   fitBombPrefabToCell: 1
   previewBombsInEditor: 1
   bombRevealDuration: 0.75
   fallbackBombColor: {r: 0.95, g: 0.12, b: 0.1, a: 1}
+  stonePrefab: {fileID: 7510784227878636226, guid: 58a3e7917ceb12a4ea51d62801bca620, type: 3}
 --- !u!1 &1354805817
 GameObject:
   m_ObjectHideFlags: 0
@@ -365,6 +410,7 @@ GameObject:
   - component: {fileID: 1354805818}
   - component: {fileID: 1354805820}
   - component: {fileID: 1354805821}
+  - component: {fileID: 1354805822}
   m_Layer: 0
   m_Name: Miner
   m_TagString: Untagged
@@ -419,7 +465,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 5
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 5213361e06cad7b42bfdd3a880418c2b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -460,7 +506,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   position: {x: 0, y: 0}
   direction: {x: 0, y: 0}
+  waitTime: 0.1
   grid: {fileID: 900000102}
+  gm: {fileID: 13113457}
 --- !u!114 &1354805821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -491,6 +539,24 @@ MonoBehaviour:
   m_DefaultActionMap: 
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &1354805822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1354805817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b7f9a23913c4cc5a3d16a1e3f7b9c42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BombProximityVignette
+  effectDistance: 4.5
+  fullStrengthDistance: 0.45
+  maxIntensity: 0.28
+  fadeSpeed: 4
+  vignetteColor: {r: 0.9, g: 0.03, b: 0.01, a: 1}
+  smoothness: 0.55
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -498,3 +564,4 @@ SceneRoots:
   - {fileID: 13172213}
   - {fileID: 900000101}
   - {fileID: 1354805819}
+  - {fileID: 13113456}
