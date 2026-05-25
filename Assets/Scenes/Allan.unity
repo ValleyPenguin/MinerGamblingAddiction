@@ -386,6 +386,12 @@ MonoBehaviour:
   maximumOres: 28
   randomSeed: 6767
   fallbackOreColor: {r: 0.121568635, g: 0.8750537, b: 0.9019608, a: 1}
+  collectedDiamondSprite: {fileID: 6400359420969742804, guid: d40a6a858b18fc0489fdb8c076f986af, type: 3}
+  minimumCollectedDiamonds: 6
+  maximumCollectedDiamonds: 9
+  collectedDiamondTravelDistance: 0.5
+  collectedDiamondFadeDuration: 0.65
+  collectedDiamondSortingOrder: 4
   oreRevealRange: 2
   oreFadeEdgeBlocks: 1
   oreEdgeAlpha: 0.1

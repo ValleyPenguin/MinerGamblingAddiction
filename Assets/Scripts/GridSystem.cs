@@ -33,6 +33,14 @@ public sealed class GridSystem : MonoBehaviour
     [SerializeField] private int randomSeed = 12345;
     [SerializeField] private Color fallbackOreColor = new Color(0.9f, 0.55f, 0.12f, 1f);
 
+    [Header("Ore Collect Effect")]
+    [SerializeField] private Sprite collectedDiamondSprite;
+    [SerializeField, Min(1)] private int minimumCollectedDiamonds = 3;
+    [SerializeField, Min(1)] private int maximumCollectedDiamonds = 6;
+    [SerializeField, Min(0f)] private float collectedDiamondTravelDistance = 0.38f;
+    [SerializeField, Min(0.01f)] private float collectedDiamondFadeDuration = 0.45f;
+    [SerializeField] private int collectedDiamondSortingOrder = 5;
+
     [Header("Ore Visibility")]
     [SerializeField, Min(0)] private int oreRevealRange = 3;
     [SerializeField, Min(0)] private int oreFadeEdgeBlocks = 1;
@@ -88,6 +96,10 @@ public sealed class GridSystem : MonoBehaviour
         cellPixelSize = Mathf.Max(1, cellPixelSize);
         gridLinePixels = Mathf.Max(1f, gridLinePixels);
         maximumOres = Mathf.Max(0, maximumOres);
+        minimumCollectedDiamonds = Mathf.Max(1, minimumCollectedDiamonds);
+        maximumCollectedDiamonds = Mathf.Max(minimumCollectedDiamonds, maximumCollectedDiamonds);
+        collectedDiamondTravelDistance = Mathf.Max(0f, collectedDiamondTravelDistance);
+        collectedDiamondFadeDuration = Mathf.Max(0.01f, collectedDiamondFadeDuration);
         oreRevealRange = Mathf.Max(0, oreRevealRange);
         oreFadeEdgeBlocks = Mathf.Max(0, oreFadeEdgeBlocks);
         oreRevealSpeed = Mathf.Max(0f, oreRevealSpeed);
@@ -412,7 +424,7 @@ public sealed class GridSystem : MonoBehaviour
             return;
         }
 
-        OreView oreView = new OreView(cell, renderers);
+        OreView oreView = new OreView(cell, ore, renderers);
         oreViews.Add(oreView);
 
         if (!Application.isPlaying && previewAllOresInEditor)
@@ -635,18 +647,61 @@ public sealed class GridSystem : MonoBehaviour
 
     public void DestroyOre(Vector2Int cell)
     {
-        occupiedCells.Remove(cell);
+        if (occupiedCells == null || !occupiedCells.Remove(cell))
+        {
+            return;
+        }
+
+        for (int i = oreViews.Count - 1; i >= 0; i--)
+        {
+            OreView oreView = oreViews[i];
+            if (oreView.Cell != cell)
+            {
+                continue;
+            }
+
+            SpawnCollectedDiamonds(oreView);
+            GameObject oreObject = oreView.GameObject;
+            oreViews.RemoveAt(i);
+
+            if (oreObject != null)
+            {
+                DestroyGeneratedObject(oreObject);
+            }
+
+            return;
+        }
+    }
+
+    private void SpawnCollectedDiamonds(OreView oreView)
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        Sprite sprite = collectedDiamondSprite != null ? collectedDiamondSprite : oreView.Sprite;
+        DiamondCollectEffect.SpawnBurst(
+            GridToWorld(oreView.Cell),
+            sprite,
+            minimumCollectedDiamonds,
+            maximumCollectedDiamonds,
+            collectedDiamondTravelDistance,
+            collectedDiamondFadeDuration,
+            collectedDiamondSortingOrder);
     }
 
     private sealed class OreView
     {
+        private readonly GameObject gameObject;
         private readonly SpriteRenderer[] renderers;
         private readonly Color[] baseColors;
         private float currentAlpha = 1f;
 
-        public OreView(Vector2Int cell, SpriteRenderer[] renderers)
+        public OreView(Vector2Int cell, GameObject gameObject, SpriteRenderer[] renderers)
         {
             Cell = cell;
+            this.gameObject = gameObject;
             this.renderers = renderers;
             baseColors = new Color[renderers.Length];
 
@@ -657,6 +712,8 @@ public sealed class GridSystem : MonoBehaviour
         }
 
         public Vector2Int Cell { get; }
+        public GameObject GameObject => gameObject;
+        public Sprite Sprite => renderers.Length > 0 && renderers[0] != null ? renderers[0].sprite : null;
         public bool IsValid => renderers.Length > 0 && renderers[0] != null;
 
         public void SetAlpha(float alpha)
