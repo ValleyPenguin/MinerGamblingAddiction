@@ -11,9 +11,11 @@ public class GameManager : MonoBehaviour
         Debug.Log(tempScore);
     }
 
-    public void CashOut()
+    public int CashOut()
     {
         activeScore += tempScore;
+        tempScore = 0;
         Debug.Log($"You scored {activeScore} diamonds");
+        return activeScore;
     }
 }

@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float waitTime;
     [SerializeField] private GridSystem grid;
     [SerializeField] private GameManager gm;
+    [SerializeField] private ExtractionResultDisplay extractionResultDisplay;
     private Vector2Int newPosition;
     private bool inputLocked;
     private bool timerLock;
@@ -18,6 +19,16 @@ public class PlayerController : MonoBehaviour
         if (GetComponent<BombProximityVignette>() == null)
         {
             gameObject.AddComponent<BombProximityVignette>();
+        }
+
+        if (extractionResultDisplay == null)
+        {
+            extractionResultDisplay = GetComponent<ExtractionResultDisplay>();
+        }
+
+        if (extractionResultDisplay == null)
+        {
+            extractionResultDisplay = gameObject.AddComponent<ExtractionResultDisplay>();
         }
     }
     
@@ -46,7 +57,17 @@ public class PlayerController : MonoBehaviour
 
     public void OnCashOut(InputValue value)
     {
-        gm.CashOut();
+        if (inputLocked)
+        {
+            return;
+        }
+
+        int escapedDiamonds = gm.CashOut();
+        if (extractionResultDisplay != null)
+        {
+            extractionResultDisplay.Show(escapedDiamonds);
+        }
+
         inputLocked = true;
     }
 
