@@ -1,14 +1,16 @@
 using UnityEngine;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] private TMP_Text currentScoreText;
     private int tempScore;
     private int activeScore;
     
     public void MineOre()
     {
         tempScore++;
-        Debug.Log(tempScore);
+        currentScoreText.text = $"Current Score: {tempScore}";
     }
 
     public int CashOut()
