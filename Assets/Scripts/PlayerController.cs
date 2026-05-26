@@ -13,6 +13,8 @@ public class PlayerController : MonoBehaviour
     private Vector2Int newPosition;
     private bool inputLocked;
     private bool timerLock;
+    
+    public Vector2Int Position => position;
 
     private void Awake()
     {

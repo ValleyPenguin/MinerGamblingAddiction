@@ -349,7 +349,7 @@ GameObject:
   - component: {fileID: 170274709}
   m_Layer: 0
   m_Name: Miner
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -607,7 +607,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 7.296875
+  orthographic size: 5.625
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -797,7 +797,7 @@ GameObject:
   - component: {fileID: 1668769732}
   m_Layer: 0
   m_Name: Grid System
-  m_TagString: Untagged
+  m_TagString: Grid
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
