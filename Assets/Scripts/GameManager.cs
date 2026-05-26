@@ -13,6 +13,11 @@ public class GameManager : MonoBehaviour
         currentScoreText.text = $"Current Score: {tempScore}";
     }
 
+    public void LoseGame()
+    {
+        currentScoreText.text = "You lost all the Diamonds!";
+    }
+
     public int CashOut()
     {
         activeScore += tempScore;

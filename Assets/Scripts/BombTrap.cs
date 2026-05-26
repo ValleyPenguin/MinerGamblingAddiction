@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 
 public sealed class BombTrap : MonoBehaviour
 {
+    [SerializeField] private GameManager gm;
     private SpriteRenderer[] spriteRenderers;
     private float revealDuration = 0.75f;
     private bool triggered;
@@ -16,6 +17,9 @@ public sealed class BombTrap : MonoBehaviour
         {
             SetVisible(false);
         }
+        
+        if(gm == null)
+            gm = GameObject.FindWithTag("GameController").GetComponent<GameManager>();
     }
 
     public void Configure(float revealDuration, bool visibleWhileEditing)
@@ -39,6 +43,7 @@ public sealed class BombTrap : MonoBehaviour
 
         triggered = true;
         SetVisible(true);
+        gm.LoseGame();
         StartCoroutine(ReloadSceneAfterReveal());
     }
 
