@@ -830,7 +830,7 @@ MonoBehaviour:
   oreSpawnChance: 0.415
   maximumOres: 28
   randomSeed: 6767
-  randomizeSeedOnPlay: 0
+  randomizeSeedOnPlay: 1
   fallbackOreColor: {r: 0.121568635, g: 0.8750537, b: 0.9019608, a: 1}
   collectedDiamondSprite: {fileID: 0}
   minimumCollectedDiamonds: 3
